@@ -11,12 +11,14 @@
         <thead>
            <td>Username</td>
            <td>Password</td>
+           <td>isAdmin</td>
         </thead>
         
         {% for user in users %}
            <tr>
               <td>{{user[0]}}</td>
               <td>{{user[1]}}</td>
+              <td>{{user[2]}}</td>
            </tr>
         {% endfor %}
      </table>
@@ -27,6 +29,8 @@
     <form method=post action="/add_user">
         Username: <input type=text name=username>
         Password: <input type=password name=password>
+        <input type="checkbox" id="isAdmin" name="isAdmin" value="true">
+        <label for="isAdmin">isAdmin</label><br>
         <input type=submit>
     </form>
 </body>

@@ -16,7 +16,7 @@ def create_db():
     # Db connection
     conn = sqlite3.connect(DATABASE)
     # Create tables with sqlite3
-    conn.execute('CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT)')
+    conn.execute('CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, isAdmin TEXT)')
     conn.execute('CREATE TABLE IF NOT EXISTS books (title TEXT, author TEXT, FOREIGN KEY(author) REFERENCES users(username))')
     # Terminate the db connection
     conn.close()
@@ -67,11 +67,12 @@ def showUsers():
 def addUser():
         username = request.form['username']
         password = request.form['password']
+        isAdmin = 'no' if (request.form.get('isAdmin') is None) else 'yes'
 
         # Add book to DB
         con = sqlite3.connect(DATABASE)
         cur = con.cursor()
-        cur.execute("INSERT INTO users (username,password) VALUES (?,?)",(username,password))
+        cur.execute("INSERT INTO users (username,password,isAdmin) VALUES (?,?,?)",(username,password,isAdmin))
         con.commit()
         cur.execute("select * from users")
         users = cur.fetchall(); 
