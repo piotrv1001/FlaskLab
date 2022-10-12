@@ -3,10 +3,14 @@
 
 from flask import Flask, template_rendered
 from flask import render_template, request, redirect, url_for, flash, session
+from flask_session import Session
 import sqlite3
 
 # App creation
 app = Flask("Flask - Lab")
+
+# Session creation
+sess = Session()
 
 # SqlLite db file path
 DATABASE = 'database.db'
@@ -26,14 +30,21 @@ def create_db():
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    con = sqlite3.connect(DATABASE)
-    
-    # Fetch data from table
-    cur = con.cursor()
-    cur.execute("select * from books")
-    books = cur.fetchall();  
 
-    return render_template('main.html', books = books)
+    if 'user' in session:
+        con = sqlite3.connect(DATABASE)
+    
+        # Fetch data from table
+        cur = con.cursor()
+        cur.execute("select * from books")
+        books = cur.fetchall();  
+
+        return render_template('main.html', books = books)
+
+    else:
+        return render_template('login.html')
+
+    
 
 
 @app.route('/add_book', methods=['POST'])
@@ -58,18 +69,24 @@ def showUsers():
             username = request.args.get("username")
             con = sqlite3.connect(DATABASE)
             cur = con.cursor()
-            cur.execute("select * from users where username=?", (username, ))
-            user = cur.fetchone()
-            con.close()
-            return render_template('user.html', user = user)
-
+            currentLoggedUser = session["user"]
+            cur.execute("select * from users where username=?", (currentLoggedUser, ))
+            currentUser = cur.fetchone()
+            if currentUser[2] != 'yes':
+                return 'Only admin has access!'
+            else:
+                cur.execute("select * from users where username=?", (username, ))
+                user = cur.fetchone()
+                con.close()
+                return render_template('user.html', user = user)
+            
         else:
             con = sqlite3.connect(DATABASE)
         
             # Fetch data from table
             cur = con.cursor()
             cur.execute("select * from users")
-            users = cur.fetchall();
+            users = cur.fetchall()
             con.close()  
 
             return render_template('users.html', users = users)
@@ -79,8 +96,7 @@ def showUsers():
 def addUser():
         username = request.form['username']
         password = request.form['password']
-        isAdmin = 'no' if (request.form.get('isAdmin') is None) else 'yes'
-
+        isAdmin = 'no' if (request.form.get('isAdmin') is None) else 'yes'        
         # Add book to DB
         con = sqlite3.connect(DATABASE)
         cur = con.cursor()
@@ -99,6 +115,18 @@ def showLoginScreen():
     return render_template('login.html')
 
 
+@app.route('/logout', methods=['GET'])
+def logOut():
+    # If the user session exists - remove it
+    if 'user' in session:
+        session.pop('user')
+    else:
+        # Redirect the client to the homepage
+        redirect(url_for('index'))
+    
+    return "Logged out <br>  <a href='/'> Back </a>"
+
+
 @app.route('/authenticate', methods=['POST'])
 def authenticate():
 
@@ -108,16 +136,22 @@ def authenticate():
     print(password)
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
-    con.execute("select * from users where username=? and password=?", (username, password))
-    requestedUser = cur.fetchall()
+    cur.execute("select * from users where username=?", (username, ))
+    requestedUser = cur.fetchone()
     con.close()
     print(requestedUser)
-    if len(requestedUser) < 1:
+    if requestedUser is None or requestedUser[1] != password:
         return "Invalid username or password"
+
+    session["user"] = username
     
     return f'Hello, welcome {username}' + index()
 
 
 
 # Start the app in debug mode
+app.secret_key = 'super secret key'
+app.config['SESSION_TYPE'] = 'filesystem'
+sess.init_app(app)
+app.config.from_object(__name__)
 app.run(debug = True)
