@@ -79,5 +79,32 @@ def addUser():
 
         return "User succesfully added <br>" + render_template('users.html', users = users)
 
+
+@app.route('/login', methods=['GET'])
+def showLoginScreen():
+    
+    return render_template('login.html')
+
+
+@app.route('/authenticate', methods=['POST'])
+def authenticate():
+
+    username = request.form['username']
+    password = request.form['password']
+    print(username)
+    print(password)
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+    con.execute("select * from users where username=? and password=?", (username, password))
+    requestedUser = cur.fetchall()
+    con.close()
+    print(requestedUser)
+    if len(requestedUser) < 1:
+        return "Invalid username or password"
+    
+    return f'Hello, welcome {username}' + index()
+
+
+
 # Start the app in debug mode
 app.run(debug = True)
