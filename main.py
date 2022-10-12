@@ -1,7 +1,7 @@
 # Importing flask module
 
 
-from flask import Flask
+from flask import Flask, template_rendered
 from flask import render_template, request, redirect, url_for, flash, session
 import sqlite3
 
@@ -53,14 +53,26 @@ def addBook():
 
 @app.route('/users', methods=['POST', 'GET'])
 def showUsers():
-        con = sqlite3.connect(DATABASE)
-    
-        # Fetch data from table
-        cur = con.cursor()
-        cur.execute("select * from users")
-        users = cur.fetchall();  
 
-        return render_template('users.html', users = users)
+        if request.args.get("username"):
+            username = request.args.get("username")
+            con = sqlite3.connect(DATABASE)
+            cur = con.cursor()
+            cur.execute("select * from users where username=?", (username, ))
+            user = cur.fetchone()
+            con.close()
+            return render_template('user.html', user = user)
+
+        else:
+            con = sqlite3.connect(DATABASE)
+        
+            # Fetch data from table
+            cur = con.cursor()
+            cur.execute("select * from users")
+            users = cur.fetchall();
+            con.close()  
+
+            return render_template('users.html', users = users)
 
 
 @app.route('/add_user', methods=['POST'])

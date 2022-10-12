@@ -16,7 +16,7 @@
         
         {% for user in users %}
            <tr>
-              <td>{{user[0]}}</td>
+              <td><a href="/users?username={{user[0]}}">{{user[0]}}</a></td>
               <td>{{user[1]}}</td>
               <td>{{user[2]}}</td>
            </tr>
@@ -33,6 +33,8 @@
         <label for="isAdmin">isAdmin</label><br>
         <input type=submit>
     </form>
+    <br>
+    <a href="/">Index</a>
 </body>
 
 </html>
